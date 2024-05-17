@@ -72,7 +72,7 @@ def main():
     
     for emotion in emotions:
         emotion_folder = f"images/train/{emotion}/"
-        output_file = f"data/{emotion}_data.csv"
+        output_file = f"{emotion}_data.csv"
         
         # Xóa nội dung của file nếu file đã tồn tại
         if os.path.exists(output_file):
