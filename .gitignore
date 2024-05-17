@@ -3,6 +3,6 @@
 # Kích hoạt môi trường:
 # Windows command prompt: .venv\Scripts\activate.bat
 # Windows PowerShell: .venv\Scripts\Activate.ps1
-.venv
+.venv/
 # File này đang lỗi nên chưa push
 EmotionRecognition.py
