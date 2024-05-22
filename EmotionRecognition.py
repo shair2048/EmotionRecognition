@@ -30,7 +30,7 @@ while True:
         maxindex = int(np.argmax(prediction))
         cv2.putText(frame, emotion_dict[maxindex], (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
-    cv2.imshow('Video', cv2.resize(frame,(480,480),interpolation = cv2.INTER_CUBIC))
+    cv2.imshow('Video', cv2.resize(frame,(700,480),interpolation = cv2.INTER_CUBIC))
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
