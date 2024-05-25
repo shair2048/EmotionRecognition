@@ -30,6 +30,9 @@ class EmotionDetector(VideoTransformerBase):
         return img
 
 def main():
+    with st.sidebar:
+        st.page_link("pages/Chart.py", label="Chart")
+    
     option = st.selectbox(
         "Select media", 
         ("Webcam", "Image", "Video"), 
