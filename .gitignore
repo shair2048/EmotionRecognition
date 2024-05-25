@@ -1,4 +1,4 @@
 # Môi trường ảo
 # .venv\Scripts\activate.bat
 .venv/
-Recognition.py
+RecognitionApp.py
