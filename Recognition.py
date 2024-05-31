@@ -5,12 +5,17 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from PIL import Image
-import os
-import tempfile
+import threading
+import time
+import matplotlib.pyplot as plt
 
 # Load pre-trained model and emotion labels
-model = tf.keras.models.load_model('model.h5')
-emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
+model = tf.keras.models.load_model('model_fer.h5')
+emotion_dict = {0: "Angry", 1: "Disgust", 2: "Fear", 3: "Happy", 4: "Sad", 5: "Surprise", 6: "Neutral"}
+
+# Global array to store emotion times from each session
+if "all_emotion_times" not in st.session_state:
+    st.session_state.all_emotion_times = []
 
 # Define a video transformer class for emotion detection
 class EmotionDetector(VideoTransformerBase):
@@ -25,13 +30,28 @@ class EmotionDetector(VideoTransformerBase):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
 
-        for (x, y, w, h) in faces:
-            roi_gray = gray[y:y + h, x:x + w]
-            cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
-            prediction = model.predict(cropped_img)
-            maxindex = int(np.argmax(prediction))
-            cv2.putText(img, emotion_dict[maxindex], (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-            cv2.rectangle(img, (x, y-50), (x+w, y+h+10), (255, 0, 0), 2)
+        current_time = time.time()
+        with self.lock:
+            if self.last_emotion is not None:
+                self.emotion_times[self.last_emotion] += current_time - self.last_update_time
+
+            if len(faces) > 0:
+                for (x, y, w, h) in faces:
+                    roi_gray = gray[y:y + h, x:x + w]
+                    cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
+                    prediction = model.predict(cropped_img)
+                    maxindex = int(np.argmax(prediction))
+                    emotion = emotion_dict[maxindex]
+
+                    if emotion != self.last_emotion:
+                        self.last_emotion = emotion
+                        self.last_update_time = current_time
+
+                    cv2.putText(img, emotion, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+                    cv2.rectangle(img, (x, y-50), (x+w, y+h+10), (255, 0, 0), 2)
+                    break  # We only care about the first detected face
+
+            self.last_update_time = current_time
 
         return img
 
@@ -66,8 +86,9 @@ def plot_emotion_pie_chart(emotion_history):
     st.pyplot(fig)
 
 def main():
-    # with st.sidebar:
-    st.page_link("pages/Charts.py")
+    st.set_page_config(page_title="Emotion Detection App")
+
+    st.title("Real-Time Emotion Detection")
     
     st.sidebar.title("Options")
     option = st.sidebar.selectbox(
@@ -109,7 +130,8 @@ def main():
                 cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
                 prediction = model.predict(cropped_img)
                 maxindex = int(np.argmax(prediction))
-                cv2.putText(img, emotion_dict[maxindex], (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+                emotion = emotion_dict[maxindex]
+                cv2.putText(img, emotion, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
                 cv2.rectangle(img, (x, y-50), (x+w, y+h+10), (255, 0, 0), 2)
 
             # Convert the image to RGB (OpenCV uses BGR by default)
@@ -172,5 +194,3 @@ if __name__ == "__main__":
     #         # Display the processed video
     #         st.video('output.mp4')
 
-if __name__ == "__main__":
-    main()
