@@ -1,0 +1,13 @@
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+openpyxl
+plotly
+mediapipe
+cv
+keras
+streamlit
+streamlit_webrtc
+tensorflow
