@@ -1,79 +1,43 @@
-import tkinter as tk
 import cv2
 import numpy as np
-from keras.models import model_from_json
-from keras.preprocessing import image
-import keras.utils as image
-from PIL import Image, ImageTk
+import copy
+import tensorflow as tf
 
-# Load the pre-trained model
-model = model_from_json(open("model_fer.json", "r").read())
-model.load_weights('model_fer.weights.h5')
+# Load face classifier and emotion detection model
+face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+model = tf.keras.models.load_model('modelzz (3).keras')
 
-# Initialize the face cascade classifier
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-
-
-# Function to process video frames and detect emotions
-def detect_emotions():
-    ret, frame = cap.read()
-    if not ret:
-        return
-
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-
-    for (x, y, w, h) in faces:
-        roi_gray = gray[y:y + h, x:x + w]
-        roi_gray = cv2.resize(roi_gray, (48, 48))
-        img_pixels = image.img_to_array(roi_gray)
-        img_pixels = np.expand_dims(img_pixels, axis=0)
-        img_pixels /= 255.0
-
-        predictions = model.predict(img_pixels)
-        max_index = np.argmax(predictions[0])
-        emotions = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
-        predicted_emotion = emotions[max_index]
-
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.putText(frame, predicted_emotion, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    img = Image.fromarray(frame)
-    # img = Image.fromarray((frame * 255).astype('uint8'))
-    imgtk = ImageTk.PhotoImage(image=img)
-    video_label.imgtk = imgtk
-    video_label.configure(image=imgtk)
-
-    video_label.after(10, detect_emotions)
-
-# Function to close the application
-def close_application():
-    window.destroy()
-
-# Create the main window
-window = tk.Tk()
-window.title("Real-Time Emotion Detection")
-window.geometry("800x600")
-
-# Create a label to display the video stream
-video_label = tk.Label(window)
-video_label.pack()
-
-# Create a button to close the application
-close_button = tk.Button(window, text="Close", command=close_application)
-close_button.place(relx=.5, rely=.8)
-close_button.pack()
-
-# Open the video capture
+# Start video capture
 cap = cv2.VideoCapture(0)
 
-# Start the emotion detection process
-detect_emotions()
+# Emotion labels
+text_list = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Sad', 'Surprise']
 
-# Run the Tkinter event loop
-window.mainloop()
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+    
+    img = copy.deepcopy(frame)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    faces = face_classifier.detectMultiScale(gray, 1.3, 5)
+    
+    for (x, y, w, h) in faces:
+        fc = gray[y:y+h, x:x+w]
+        roi = cv2.resize(fc, (48, 48))
+        roi = roi[np.newaxis, :, :, np.newaxis] / 255.0  # Normalize to [0,1]
+        
+        pred = model.predict(roi)
+        text_idx = np.argmax(pred)
+        text = text_list[text_idx]
+        
+        cv2.putText(img, text, (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 255), 2)
+        img = cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, 255), 2)
 
-# Release the video capture and destroy the window
+    cv2.imshow("frame", img)
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord('q'):
+        break
+
 cap.release()
 cv2.destroyAllWindows()
