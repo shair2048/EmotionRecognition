@@ -27,7 +27,7 @@ class EmotionDetector(VideoTransformerBase):
         self.lock = threading.Lock()
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-    def process_frame(self, frame):
+    def process_frame(self, frame, show_probabilities=False):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
 
@@ -48,6 +48,10 @@ class EmotionDetector(VideoTransformerBase):
                 prob = np.max(prediction)
                 cv2.putText(frame, f"{emotion} ({prob:.2f})", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                if show_probabilities:
+                    data = {emotion: [round(prediction[0][i], 2)] for i, emotion in enumerate(emotion_dict.values())}
+                    df = pd.DataFrame(data)
+                    st.write(df)
 
             self.last_update_time = current_time
 
@@ -63,8 +67,9 @@ class EmotionDetector(VideoTransformerBase):
         return frame
     
     def transformImg(self, image_file):
+        show_probabilities = True
         img = cv2.imdecode(np.frombuffer(image_file.read(), np.uint8), cv2.IMREAD_COLOR)
-        img = self.process_frame(img)
+        img = self.process_frame(img, show_probabilities)
 
         # Convert the image to RGB (OpenCV uses BGR by default)
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
