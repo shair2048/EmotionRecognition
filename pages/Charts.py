@@ -61,7 +61,7 @@ if uploaded_file is not None:
         emotions_sum = df.sum()
         percentages = [f'{count/emotions_sum.sum()*100:.1f}%' for count in emotions_sum]
         labels = [f'{emotion} ({percentage})' for emotion, percentage in zip(df.columns, percentages)]
-        ax.pie(emotions_sum, labels=labels, colors=sns.color_palette('pastel', len(df.columns)), autopct='', startangle=90)
+        ax.pie(emotions_sum, colors=sns.color_palette('pastel', len(df.columns)), autopct='', startangle=90)
         ax.axis('equal')
 
         handles = [Patch(color=color, label=label) for label, color in zip(labels, sns.color_palette('pastel', len(df.columns)))]

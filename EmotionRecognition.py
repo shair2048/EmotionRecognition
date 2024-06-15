@@ -5,7 +5,7 @@ import tensorflow as tf
 
 # Load face classifier and emotion detection model
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-model = tf.keras.models.load_model('modelzz (3).keras')
+model = tf.keras.models.load_model('best_model (2).keras')
 
 # Start video capture
 cap = cv2.VideoCapture(0)
