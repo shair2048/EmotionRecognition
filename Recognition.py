@@ -125,7 +125,7 @@ def plot_emotion_pie_chart(emotion_history):
 def main():
     st.set_page_config(page_title="Emotion Detection App")
 
-    st.title("Real-Time Emotion Detection")
+    st.title("Emotion Detection")
     
     st.sidebar.title("Options")
     option = st.sidebar.selectbox(
